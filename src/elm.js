@@ -1,6 +1,6 @@
-import { Elm } from './Main.elm'
+import { Elm } from './Counter.elm'
 
-Elm.Main.init({
-  node: document.querySelector('#elm'),
+Elm.Counter.init({
+  node: document.querySelector('#counter-elm'),
   flags: {}
 })

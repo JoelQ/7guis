@@ -6,6 +6,7 @@ import Html.Attributes
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Extra
+import Round
 
 
 main : Program Flags Model Msg
@@ -143,9 +144,11 @@ floatInput { id, labelText, onInput, value } =
     [ Html.input
         [ Html.Attributes.id id
         , Html.Attributes.type_ "number"
-        , Html.Attributes.step "0.1"
-        , Html.Attributes.value (String.fromFloat value)
         , onFloatInput onInput
+
+        -- Round to 1 decimal point to avoid IEEE 754 floating point precision
+        -- issues such numbers ending in .000000000000001
+        , Html.Attributes.value (Round.round 1 value)
         ]
         []
     , Html.label

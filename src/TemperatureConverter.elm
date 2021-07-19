@@ -25,13 +25,50 @@ type alias Flags =
 -- MODEL
 
 
+{-| Use Celsius as our source of truth
+-}
 type alias Model =
-    Float
+    Celsius
 
 
 initialModel : Model
 initialModel =
-    0
+    Celsius 0
+
+
+
+-- UNITS OF MEASURE
+--
+-- Since raw floats can represent very different values, I wrap them in a custom
+-- type here. This allows the compiler to know the difference between them and
+-- prevent me from accidentally using a celsius value when I meant to use a
+-- farenheit.
+--
+-- I decided to implement these myself here because it seemed to be part
+-- of the core problem to be solved. On a "real" project I'd probably reach for
+-- a unit library like
+-- https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/
+--
+-- For more on types and units of measure, see this conference talk "A Number by
+-- Any Other Name" https://www.youtube.com/watch?v=WnTw0z7rD3E
+
+
+type Celsius
+    = Celsius Float
+
+
+type Farenheit
+    = Farenheit Float
+
+
+toFarenheit : Celsius -> Farenheit
+toFarenheit (Celsius c) =
+    Farenheit (c * (9 / 5) + 32)
+
+
+toCelsius : Farenheit -> Celsius
+toCelsius (Farenheit f) =
+    Celsius ((f - 32) * (5 / 9))
 
 
 
@@ -39,18 +76,21 @@ initialModel =
 
 
 type Msg
-    = NewCelsius Float
-    | NewFarenheit Float
+    = NewCelsius Celsius
+    | NewFarenheit Farenheit
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         NewCelsius celsius ->
+            -- store as-is since Celsius is our source of truth
             celsius
 
         NewFarenheit farenheit ->
-            (farenheit - 32) * (5 / 9)
+            -- convert to Celsius before storing since that is our source of
+            -- truth
+            toCelsius farenheit
 
 
 
@@ -63,26 +103,26 @@ view model =
         Html.legend [] [ Html.text "Temperature Conversion" ]
             :: celsiusInput model
             ++ Html.text " = "
-            :: farenheitInput (model * (9 / 5) + 32)
+            :: farenheitInput (toFarenheit model)
 
 
-celsiusInput : Float -> List (Html Msg)
-celsiusInput celsius =
+celsiusInput : Celsius -> List (Html Msg)
+celsiusInput (Celsius c) =
     floatInput
         { labelText = "º Celsius"
         , id = "celsius"
-        , onInput = NewCelsius
-        , value = celsius
+        , onInput = NewCelsius << Celsius
+        , value = c
         }
 
 
-farenheitInput : Float -> List (Html Msg)
-farenheitInput farenheit =
+farenheitInput : Farenheit -> List (Html Msg)
+farenheitInput (Farenheit f) =
     floatInput
         { labelText = "º Farenheit"
         , id = "farenheit"
-        , onInput = NewFarenheit
-        , value = farenheit
+        , onInput = NewFarenheit << Farenheit
+        , value = f
         }
 
 

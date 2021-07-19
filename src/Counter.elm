@@ -41,7 +41,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.main_ []
+    Html.div []
         [ Html.label
             [ Html.Attributes.for "counter"
             , Html.Attributes.style "display" "block"

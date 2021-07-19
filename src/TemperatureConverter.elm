@@ -60,22 +60,30 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.fieldset [] <|
-        List.concat
-            [ [ Html.legend [] [ Html.text "Temperature Conversion" ] ]
-            , floatInput
-                { labelText = "º Celsius"
-                , id = "celsius"
-                , onInput = NewCelsius
-                , value = model
-                }
-            , [ Html.text " = " ]
-            , floatInput
-                { labelText = "º Farenheit"
-                , id = "farenheit"
-                , onInput = NewFarenheit
-                , value = model * (9 / 5) + 32
-                }
-            ]
+        Html.legend [] [ Html.text "Temperature Conversion" ]
+            :: celsiusInput model
+            ++ Html.text " = "
+            :: farenheitInput (model * (9 / 5) + 32)
+
+
+celsiusInput : Float -> List (Html Msg)
+celsiusInput celsius =
+    floatInput
+        { labelText = "º Celsius"
+        , id = "celsius"
+        , onInput = NewCelsius
+        , value = celsius
+        }
+
+
+farenheitInput : Float -> List (Html Msg)
+farenheitInput farenheit =
+    floatInput
+        { labelText = "º Farenheit"
+        , id = "farenheit"
+        , onInput = NewFarenheit
+        , value = farenheit
+        }
 
 
 

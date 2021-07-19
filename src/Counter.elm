@@ -43,14 +43,14 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Html.label
-            [ Html.Attributes.for "counter"
+            [ Html.Attributes.for "counter-field"
             , Html.Attributes.style "display" "block"
             ]
             [ Html.text "Counter" ]
         , Html.input
             [ Html.Attributes.value (String.fromInt model)
             , Html.Attributes.readonly True
-            , Html.Attributes.id "counter"
+            , Html.Attributes.id "counter-field"
             ]
             []
         , Html.button [ Html.Events.onClick Increment ] [ Html.text "Count" ]

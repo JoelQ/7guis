@@ -1,15 +1,57 @@
 module Main exposing (main)
 
+import Browser
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events
 
 
-main : Html a
+main : Program Flags Model Msg
 main =
-    Html.section []
-        [ Html.h1 [] [ Html.text "Minimal Elm + Parcel implementation, deployed to Netlify" ]
-        , Html.p []
-            [ Html.text "Find the source on "
-            , Html.a [ Html.Attributes.href "https://github.com/JoelQ/elm-netlify-parcel" ] [ Html.text "GitHub" ]
+    Browser.sandbox
+        { init = initialModel
+        , update = update
+        , view = view
+        }
+
+
+type alias Flags =
+    ()
+
+
+type alias Model =
+    Int
+
+
+initialModel : Model
+initialModel =
+    0
+
+
+type Msg
+    = Increment
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        Increment ->
+            model + 1
+
+
+view : Model -> Html Msg
+view model =
+    Html.main_ []
+        [ Html.label
+            [ Html.Attributes.for "counter"
+            , Html.Attributes.style "display" "block"
             ]
+            [ Html.text "Counter" ]
+        , Html.input
+            [ Html.Attributes.value (String.fromInt model)
+            , Html.Attributes.readonly True
+            , Html.Attributes.id "counter"
+            ]
+            []
+        , Html.button [ Html.Events.onClick Increment ] [ Html.text "Count" ]
         ]

@@ -10,6 +10,13 @@ This is an [Elm] implementation of the [7 GUIs project]. See the GUIs on the
 [7 GUIs project]: https://eugenkiss.github.io/7guis/tasks
 [live site]: https://7guis-elm.netlify.app/
 
+## General approach
+
+Each GUI is a standalone program with its own Elm file. All of the programs are
+embedded on the main page of the site for ease of viewing.
+
+To keep the focus on Elm, I've kept the use of styling here to the bare minimum.
+
 ## Counter
 
 * [Spec](https://eugenkiss.github.io/7guis/tasks/#counter)

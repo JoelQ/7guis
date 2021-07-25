@@ -57,10 +57,15 @@ addressing the two issues above, I now store and pass around strings just about
 everywhere. In a real project, I'd be looking for opportunities to add them back
 the moment we added any kind of logic around the numbers.
 
+I made the choice to round all conversions to the nearest tenth to avoid some of
+the classic IEEE 754 [floating point precision issues]. Without this, 37ºC
+converts to 98.60000000000001ºF.
+
 <img width="495" alt="screenshot of temperature converter" src="https://user-images.githubusercontent.com/1006966/126097396-538546bb-c718-430e-a2ee-0d35f0e1bec9.png">
 
 [this example]: https://ellie-app.com/dMYdbSsYHkxa1
 [creating custom types for units of measure]: https://www.youtube.com/watch?v=WnTw0z7rD3E
+[floating point precision issues]: https://www.youtube.com/watch?v=PZRI1IfStY0
 
 ## Flight Booker
 

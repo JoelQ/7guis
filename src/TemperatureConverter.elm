@@ -4,6 +4,7 @@ import Browser
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
+import Round
 
 
 main : Program Flags Model Msg
@@ -47,8 +48,8 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { celsius = "0"
-    , farenheit = "32"
+    { celsius = "0.0"
+    , farenheit = "32.0"
     }
 
 
@@ -70,7 +71,10 @@ update msg model =
                 , farenheit =
                     case String.toFloat newCelsius of
                         Just n ->
-                            String.fromFloat <| toFarenheit n
+                            -- Round to the nearest tenth to avoid IEEE 754
+                            -- floating point precision issues like saying that
+                            -- 37 degrees C equals 98.60000000000001 degrees F.
+                            Round.round 1 <| toFarenheit n
 
                         Nothing ->
                             model.farenheit
@@ -82,7 +86,7 @@ update msg model =
                 , celsius =
                     case String.toFloat newFarenheit of
                         Just n ->
-                            String.fromFloat <| toCelsius n
+                            Round.round 1 <| toCelsius n
 
                         Nothing ->
                             model.celsius

@@ -4,9 +4,6 @@ import Browser
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
-import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Extra
-import Round
 
 
 main : Program Flags Model Msg
@@ -26,50 +23,33 @@ type alias Flags =
 -- MODEL
 
 
-{-| Use Celsius as our source of truth
+{-| These strings represent what the user has typed and what was last rendered
+for the two fields. These two are not necessarily in sync since the spec says:
+
+> When the user enters a non-numerical string into C the value in F is not
+> updated and vice versa.
+
+Thus, one cannot always be derived from the other. This means we cannot store
+only a single value as the source of truth.
+
+Note that we store strings here rather than parsed floats so that we're able to
+distinguish between the user typing "1.0" and "1.00". We will be using this when
+re-rendering the input and we want to make sure not to change what the user
+typed. Example of the problems not doing this can cause here:
+<https://ellie-app.com/dMYdbSsYHkxa1>
+
 -}
 type alias Model =
-    Celsius
+    { celsius : String
+    , farenheit : String
+    }
 
 
 initialModel : Model
 initialModel =
-    Celsius 0
-
-
-
--- UNITS OF MEASURE
---
--- Since raw floats can represent very different values, I wrap them in a custom
--- type here. This allows the compiler to know the difference between them and
--- prevent me from accidentally using a celsius value when I meant to use a
--- farenheit.
---
--- I decided to implement these myself here because it seemed to be part
--- of the core problem to be solved. On a "real" project I'd probably reach for
--- a unit library like
--- https://package.elm-lang.org/packages/ianmackenzie/elm-units/latest/
---
--- For more on types and units of measure, see this conference talk "A Number by
--- Any Other Name" https://www.youtube.com/watch?v=WnTw0z7rD3E
-
-
-type Celsius
-    = Celsius Float
-
-
-type Farenheit
-    = Farenheit Float
-
-
-toFarenheit : Celsius -> Farenheit
-toFarenheit (Celsius c) =
-    Farenheit (c * (9 / 5) + 32)
-
-
-toCelsius : Farenheit -> Celsius
-toCelsius (Farenheit f) =
-    Celsius ((f - 32) * (5 / 9))
+    { celsius = "0"
+    , farenheit = "32"
+    }
 
 
 
@@ -77,21 +57,46 @@ toCelsius (Farenheit f) =
 
 
 type Msg
-    = NewCelsius Celsius
-    | NewFarenheit Farenheit
+    = NewCelsius String
+    | NewFarenheit String
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        NewCelsius celsius ->
-            -- store as-is since Celsius is our source of truth
-            celsius
+        NewCelsius newCelsius ->
+            { model
+                | celsius = newCelsius
+                , farenheit =
+                    case String.toFloat newCelsius of
+                        Just n ->
+                            String.fromFloat <| toFarenheit n
 
-        NewFarenheit farenheit ->
-            -- convert to Celsius before storing since that is our source of
-            -- truth
-            toCelsius farenheit
+                        Nothing ->
+                            model.farenheit
+            }
+
+        NewFarenheit newFarenheit ->
+            { model
+                | farenheit = newFarenheit
+                , celsius =
+                    case String.toFloat newFarenheit of
+                        Just n ->
+                            String.fromFloat <| toCelsius n
+
+                        Nothing ->
+                            model.celsius
+            }
+
+
+toFarenheit : Float -> Float
+toFarenheit c =
+    c * (9 / 5) + 32
+
+
+toCelsius : Float -> Float
+toCelsius f =
+    (f - 32) * (5 / 9)
 
 
 
@@ -99,30 +104,30 @@ update msg model =
 
 
 view : Model -> Html Msg
-view model =
+view { celsius, farenheit } =
     Html.fieldset [] <|
         Html.legend [] [ Html.text "Temperature Conversion" ]
-            :: celsiusInput model
+            :: celsiusInput celsius
             ++ Html.text " = "
-            :: farenheitInput (toFarenheit model)
+            :: farenheitInput farenheit
 
 
-celsiusInput : Celsius -> List (Html Msg)
-celsiusInput (Celsius c) =
-    floatInput
+celsiusInput : String -> List (Html Msg)
+celsiusInput c =
+    numberInput
         { labelText = "º Celsius"
         , id = "celsius"
-        , onInput = NewCelsius << Celsius
+        , onInput = NewCelsius
         , value = c
         }
 
 
-farenheitInput : Farenheit -> List (Html Msg)
-farenheitInput (Farenheit f) =
-    floatInput
+farenheitInput : String -> List (Html Msg)
+farenheitInput f =
+    numberInput
         { labelText = "º Farenheit"
         , id = "farenheit"
-        , onInput = NewFarenheit << Farenheit
+        , onInput = NewFarenheit
         , value = f
         }
 
@@ -134,48 +139,21 @@ farenheitInput (Farenheit f) =
 type alias InputProps msg =
     { labelText : String
     , id : String
-    , onInput : Float -> msg
-    , value : Float
+    , onInput : String -> msg
+    , value : String
     }
 
 
-floatInput : InputProps msg -> List (Html msg)
-floatInput { id, labelText, onInput, value } =
+numberInput : InputProps msg -> List (Html msg)
+numberInput { id, labelText, onInput, value } =
     [ Html.input
         [ Html.Attributes.id id
         , Html.Attributes.type_ "number"
-        , onFloatInput onInput
-
-        -- Round to 1 decimal point to avoid IEEE 754 floating point precision
-        -- issues such numbers ending in .000000000000001
-        , Html.Attributes.value (Round.round 1 value)
+        , Html.Events.onInput onInput
+        , Html.Attributes.value value
         ]
         []
     , Html.label
         [ Html.Attributes.for id ]
         [ Html.text labelText ]
     ]
-
-
-
--- This is a custom DOM event handler that expects float values to be entered.
--- By default, all the DOM event handlers expect strings. Since we're working
--- with a `<input type="number">`, we can assume that all inputs will be
--- numbers. The associated decoder rejects any events whose value cannot be
--- parsed into an float
---
--- The following two articles dive into the details of how this works:
---
--- 1. https://thoughtbot.com/blog/building-custom-dom-event-handlers-in-elm
--- 2. https://thoughtbot.com/blog/advanced-dom-event-handlers-in-elm
-
-
-onFloatInput : (Float -> msg) -> Html.Attribute msg
-onFloatInput tagger =
-    Html.Events.on "input" (Decode.map tagger targetFloatValue)
-
-
-targetFloatValue : Decoder Float
-targetFloatValue =
-    Html.Events.targetValue
-        |> Decode.andThen (Json.Decode.Extra.fromMaybe "not a float" << String.toFloat)

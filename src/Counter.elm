@@ -1,4 +1,4 @@
-module Counter exposing (main)
+module Counter exposing (Flags, Model, Msg, main)
 
 import Browser
 import Html exposing (Html)

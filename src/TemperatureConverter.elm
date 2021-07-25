@@ -1,4 +1,4 @@
-module TemperatureConverter exposing (main)
+module TemperatureConverter exposing (Flags, Model, Msg, main)
 
 import Browser
 import Html exposing (Html)
